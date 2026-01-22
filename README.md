@@ -63,6 +63,22 @@ npm run build
 npm run preview
 ```
 
+### Deploy to GitHub Pages
+
+The project is configured for automatic deployment to GitHub Pages via GitHub Actions.
+
+1. Make sure GitHub Pages is enabled in your repository settings:
+   - Go to Settings → Pages
+   - Source: Select "GitHub Actions"
+
+2. Push changes to the `main` branch - the workflow will automatically build and deploy
+
+3. Your site will be available at: `https://<username>.github.io/react-grid-table/`
+
+The deployment workflow (`.github/workflows/deploy.yml`) will:
+- Build the project with the correct base path
+- Deploy to GitHub Pages automatically
+
 ## 📦 Technologies Used
 
 - **React 18** - library for building user interfaces
