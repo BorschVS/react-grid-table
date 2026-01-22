@@ -1,4 +1,4 @@
-import { JiraTask, TaskStatus, TaskPriority, TaskType } from '../types/jira'
+import { JiraTask, TaskStatus } from '../types/jira'
 
 const assignees = [
   'Alexander Johnson',
@@ -107,7 +107,6 @@ function randomDate(start: Date, end: Date): Date {
 function generateTask(monthIndex: number): JiraTask {
   const month = months[monthIndex]
   const year = 2024
-  const monthNum = monthIndex + 1
 
   const createdDate = randomDate(
     new Date(year, monthIndex, 1),
