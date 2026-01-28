@@ -1,10 +1,13 @@
 # 📊 Jira Statistics Dashboard
 
-An educational project demonstrating the capabilities of the **@tanstack/react-table** library (formerly react-table) for creating powerful and functional data tables.
+A full-stack educational project demonstrating:
+- **Frontend**: React + TypeScript + Vite with @tanstack/react-table
+- **Backend**: Nest.js + TypeORM + SQLite
+- **Architecture**: Monorepo with shared types
 
 ## 🎯 Project Features
 
-### Table Functionality
+### Frontend Features
 
 - ✅ **Sorting** - sort by any column (ascending/descending)
 - ✅ **Filtering** - filter by status, priority, and global search
@@ -13,122 +16,140 @@ An educational project demonstrating the capabilities of the **@tanstack/react-t
 - ✅ **Search** - global search across all columns
 - ✅ **Data Export** - export filtered data to CSV
 - ✅ **Responsive Design** - proper display on different screen sizes
+- ✅ **Real API Integration** - connected to Nest.js backend
 
-### Column Types
+### Backend Features
 
-The project demonstrates various column types:
+- ✅ **REST API** - Full CRUD operations for tasks
+- ✅ **Database** - SQLite with TypeORM
+- ✅ **CORS** - Configured for frontend access
+- ✅ **Auto-seeding** - Database seeded with sample data on startup
 
-- **Text** - regular text fields (title, assignee)
-- **Numbers** - numeric values (Story Points)
-- **Dates** - formatted dates (created, resolved)
-- **Statuses** - colored badges (task status)
-- **Priorities** - colored badges (task priority)
-- **Progress Bars** - progress visualization
-- **Tags/Labels** - multiple values as tags
-- **Keys** - monospace task keys
+## 🏗️ Monorepo Structure
 
-### Dark Theme
-
-The project uses a modern dark color scheme with:
-- Gradient headers
-- Smooth transitions and animations
-- Styled scrollbars
-- Hover effects
+```
+react-grid-table/
+├── frontend/              # React application
+│   ├── src/
+│   │   ├── components/   # React components
+│   │   ├── services/     # API service
+│   │   ├── hooks/         # Custom hooks
+│   │   └── types/         # Type re-exports from shared
+│   └── package.json
+├── backend/               # Nest.js API
+│   ├── src/
+│   │   ├── tasks/         # Tasks module (entity, service, controller)
+│   │   ├── app.module.ts
+│   │   └── main.ts
+│   └── package.json
+├── shared/                # Shared types
+│   └── types/
+│       └── jira.ts       # Common TypeScript types
+└── package.json          # Root workspace configuration
+```
 
 ## 🚀 Quick Start
 
-### Install Dependencies
+### Prerequisites
+
+- Node.js 20+
+- npm
+
+### Installation
 
 ```bash
+# Install all dependencies (root, frontend, backend, shared)
 npm install
+
+# Or install individually
+npm install --workspace=frontend
+npm install --workspace=backend
 ```
 
-### Run in Development Mode
+### Development
+
+Run both frontend and backend simultaneously:
 
 ```bash
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173`
+This will start:
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3000/api
 
-### Build for Production
+Or run them separately:
 
 ```bash
+# Frontend only
+npm run dev:frontend
+
+# Backend only
+npm run dev:backend
+```
+
+### Build
+
+```bash
+# Build both frontend and backend
 npm run build
+
+# Or build individually
+npm run build:frontend
+npm run build:backend
 ```
-
-### Preview Production Build
-
-```bash
-npm run preview
-```
-
-### Deploy to GitHub Pages
-
-The project is configured for automatic deployment to GitHub Pages via GitHub Actions.
-
-1. Make sure GitHub Pages is enabled in your repository settings:
-   - Go to Settings → Pages
-   - Source: Select "GitHub Actions"
-
-2. Push changes to the `main` branch - the workflow will automatically build and deploy
-
-3. Your site will be available at: `https://<username>.github.io/react-grid-table/`
-
-The deployment workflow (`.github/workflows/deploy.yml`) will:
-- Build the project with the correct base path
-- Deploy to GitHub Pages automatically
 
 ## 📦 Technologies Used
 
-- **React 18** - library for building user interfaces
-- **TypeScript** - typed JavaScript
-- **Vite** - fast build tool and dev server
-- **@tanstack/react-table** - powerful library for working with tables
-- **date-fns** - utilities for working with dates
-- **lucide-react** - icon set
+### Frontend
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **Vite** - Build tool
+- **@tanstack/react-table** - Table library
+- **date-fns** - Date utilities
+- **lucide-react** - Icons
 
-## 📚 Project Structure
+### Backend
+- **Nest.js** - Node.js framework
+- **TypeORM** - ORM
+- **SQLite** - Database
+- **TypeScript** - Type safety
 
-```
-react-grid-table/
-├── src/
-│   ├── components/
-│   │   ├── JiraStatsTable.tsx    # Main table component
-│   │   └── JiraStatsTable.css    # Table styles
-│   ├── data/
-│   │   └── mockData.ts           # Mock data generation
-│   ├── types/
-│   │   └── jira.ts               # TypeScript types
-│   ├── App.tsx                   # Main application component
-│   ├── App.css                   # Application styles
-│   ├── main.tsx                  # Entry point
-│   └── index.css                 # Global styles
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
-```
+## 🔌 API Endpoints
+
+All endpoints are prefixed with `/api`
+
+- `GET /api/tasks` - Get all tasks
+- `GET /api/tasks/:id` - Get task by ID
+- `POST /api/tasks` - Create new task
+- `PATCH /api/tasks/:id` - Update task
+- `DELETE /api/tasks/:id` - Delete task
+
+## 🗄️ Database
+
+The project uses SQLite database (`jira-tasks.db`) which is automatically created and seeded with sample data on first backend startup.
 
 ## 🎨 Demo Data
 
-The project uses mock data simulating Jira task statistics for a year:
-- Tasks by months (12 months)
+The backend automatically seeds the database with:
+- Tasks for 12 months (January - December 2024)
 - Various statuses (Done, In Progress, To Do, Blocked, Review)
 - Different priorities (Critical, High, Medium, Low)
 - Task types (Bug, Story, Task, Epic, Subtask)
-- Story Points, time spent, sprints
+- Story Points, time tracking, sprints
 - Labels and components
 
 ## 💡 Educational Goals
 
-This project was created to learn:
-1. Working with the @tanstack/react-table library
-2. Creating complex tables with multiple features
-3. TypeScript typing
-4. Component styling
-5. State management in React
-6. Creating responsive interfaces
+This project demonstrates:
+1. Monorepo architecture with npm workspaces
+2. Full-stack TypeScript development
+3. REST API design with Nest.js
+4. Database integration with TypeORM
+5. Frontend-backend integration
+6. Shared types between frontend and backend
+7. Modern React patterns (hooks, custom hooks)
+8. Table functionality with @tanstack/react-table
 
 ## 📝 License
 
