@@ -107,7 +107,7 @@ const TagsCell = ({ tags }: { tags: string[] }) => {
 }
 
 export default function JiraStatsTable() {
-  const { tasks: data, loading, error } = useTasks()
+  const { tasks: data, loading, error, usingMockData } = useTasks()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [grouping, setGrouping] = useState<GroupingState>([])
@@ -354,6 +354,17 @@ export default function JiraStatsTable() {
 
   return (
     <div className="table-container">
+      {usingMockData && (
+        <div style={{
+          padding: '0.75rem 1rem',
+          background: 'var(--warning)',
+          color: 'white',
+          textAlign: 'center',
+          fontSize: '0.9rem',
+        }}>
+          ⚠️ Using demo data (backend not connected)
+        </div>
+      )}
       <div className="table-toolbar">
         <div className="toolbar-left">
           <div className="search-box">
