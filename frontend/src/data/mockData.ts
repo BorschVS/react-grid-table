@@ -1,4 +1,4 @@
-import { JiraTask, TaskStatus, TaskPriority, TaskType } from '@react-grid-table/shared/types'
+import { JiraTask, TaskStatus } from '@react-grid-table/shared/types'
 import {
   MOCK_ASSIGNEES,
   MOCK_REPORTERS,
