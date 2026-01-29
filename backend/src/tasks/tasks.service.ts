@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { TaskEntity } from './tasks.entity'
-import { JiraTask, CreateTaskDto, UpdateTaskDto } from '@react-grid-table/shared/types'
+import { JiraTask } from '@react-grid-table/shared/types'
+import { CreateTaskDto } from './dto/create-task.dto'
+import { UpdateTaskDto } from './dto/update-task.dto'
 
 @Injectable()
 export class TasksService {
@@ -18,9 +20,12 @@ export class TasksService {
     return tasks.map(this.mapToJiraTask)
   }
 
-  async findOne(id: string): Promise<JiraTask | null> {
+  async findOne(id: string): Promise<JiraTask> {
     const task = await this.tasksRepository.findOne({ where: { id } })
-    return task ? this.mapToJiraTask(task) : null
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`)
+    }
+    return this.mapToJiraTask(task)
   }
 
   async create(createTaskDto: CreateTaskDto): Promise<JiraTask> {
@@ -37,15 +42,21 @@ export class TasksService {
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto): Promise<JiraTask> {
-    await this.tasksRepository.update(id, updateTaskDto)
     const task = await this.tasksRepository.findOne({ where: { id } })
     if (!task) {
-      throw new Error('Task not found')
+      throw new NotFoundException(`Task with ID ${id} not found`)
     }
-    return this.mapToJiraTask(task)
+    
+    await this.tasksRepository.update(id, updateTaskDto)
+    const updatedTask = await this.tasksRepository.findOne({ where: { id } })
+    return this.mapToJiraTask(updatedTask!)
   }
 
   async remove(id: string): Promise<void> {
+    const task = await this.tasksRepository.findOne({ where: { id } })
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${id} not found`)
+    }
     await this.tasksRepository.delete(id)
   }
 
