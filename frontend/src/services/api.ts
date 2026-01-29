@@ -1,4 +1,4 @@
-import { JiraTask, CreateTaskDto, UpdateTaskDto } from '../types/jira'
+import { JiraTask, CreateTaskDto, UpdateTaskDto } from '@react-grid-table/shared/types'
 
 // Use environment variable for API URL
 // For production: set VITE_API_URL in GitHub Actions secrets

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { JiraTask } from '../types/jira'
+import { JiraTask } from '@react-grid-table/shared/types'
 import { apiService } from '../services/api'
 import { generateMockData } from '../data/mockData'
 

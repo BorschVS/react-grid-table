@@ -13,9 +13,8 @@ import {
   GroupingState,
   VisibilityState,
 } from '@tanstack/react-table'
-import { JiraTask } from '../types/jira'
+import { JiraTask } from '@react-grid-table/shared/types'
 import { useTasks } from '../hooks/useTasks'
-import { format } from 'date-fns'
 import {
   ChevronDown,
   ChevronUp,
@@ -26,84 +25,28 @@ import {
   ChevronRight,
   MoreHorizontal,
 } from 'lucide-react'
+import { StatusBadge, PriorityBadge, ProgressBar, TagsCell } from './cells'
+import { formatDate } from '../utils/date'
+import { generateCSVContent, exportToCSV } from '../utils/export'
+import { toggleFilterValue } from '../utils/filters'
+import {
+  DEFAULT_PAGE_SIZE,
+  PAGE_SIZE_OPTIONS,
+  EMPTY_STATE_MESSAGES,
+  SEARCH_PLACEHOLDER,
+  ICON_SIZE_SMALL,
+  ICON_SIZE_MEDIUM,
+  ICON_SIZE_LARGE,
+} from '../constants/table'
+import {
+  STATUS_OPTIONS,
+  PRIORITY_OPTIONS,
+} from '../constants/filters'
 import './JiraStatsTable.css'
 
-// Cell components
-const StatusBadge = ({ status }: { status: string }) => {
-  const statusColors: Record<string, string> = {
-    Done: 'var(--success)',
-    'In Progress': 'var(--info)',
-    'To Do': 'var(--text-tertiary)',
-    Blocked: 'var(--error)',
-    Review: 'var(--warning)',
-  }
-
-  return (
-    <span
-      className="status-badge"
-      style={{ backgroundColor: statusColors[status] || statusColors['To Do'] }}
-    >
-      {status}
-    </span>
-  )
-}
-
-const PriorityBadge = ({ priority }: { priority: string }) => {
-  const priorityColors: Record<string, string> = {
-    Critical: 'var(--error)',
-    High: 'var(--warning)',
-    Medium: 'var(--info)',
-    Low: 'var(--text-tertiary)',
-  }
-
-  return (
-    <span
-      className="priority-badge"
-      style={{ backgroundColor: priorityColors[priority] || priorityColors['Low'] }}
-    >
-      {priority}
-    </span>
-  )
-}
-
-const ProgressBar = ({
-  timeSpent,
-  timeEstimated,
-}: {
-  timeSpent: number
-  timeEstimated: number
-}) => {
-  const percentage = Math.min((timeSpent / timeEstimated) * 100, 100)
-  const color =
-    percentage > 100
-      ? 'var(--error)'
-      : percentage > 80
-      ? 'var(--warning)'
-      : 'var(--success)'
-
-  return (
-    <div className="progress-bar-container">
-      <div className="progress-bar" style={{ width: `${percentage}%`, backgroundColor: color }} />
-      <span className="progress-text">
-        {timeSpent}h / {timeEstimated}h
-      </span>
-    </div>
-  )
-}
-
-const TagsCell = ({ tags }: { tags: string[] }) => {
-  return (
-    <div className="tags-cell">
-      {tags.slice(0, 2).map((tag, idx) => (
-        <span key={idx} className="tag">
-          {tag}
-        </span>
-      ))}
-      {tags.length > 2 && (
-        <span className="tag-more">+{tags.length - 2}</span>
-      )}
-    </div>
-  )
+// Column filter function
+const arrayIncludesFilter = (row: any, id: string, value: string[]) => {
+  return value.includes(row.getValue(id))
 }
 
 export default function JiraStatsTable() {
@@ -140,9 +83,7 @@ export default function JiraStatsTable() {
         cell: (info) => <StatusBadge status={info.getValue() as string} />,
         enableGrouping: true,
         enableSorting: true,
-        filterFn: (row, id, value) => {
-          return value.includes(row.getValue(id))
-        },
+        filterFn: arrayIncludesFilter,
         size: 140,
       },
       {
@@ -151,9 +92,7 @@ export default function JiraStatsTable() {
         cell: (info) => <PriorityBadge priority={info.getValue() as string} />,
         enableGrouping: true,
         enableSorting: true,
-        filterFn: (row, id, value) => {
-          return value.includes(row.getValue(id))
-        },
+        filterFn: arrayIncludesFilter,
         size: 130,
       },
       {
@@ -208,11 +147,7 @@ export default function JiraStatsTable() {
         header: 'Created',
         cell: (info) => {
           const date = info.getValue() as Date
-          return (
-            <span className="date-cell">
-              {format(date, 'dd.MM.yyyy')}
-            </span>
-          )
+          return <span className="date-cell">{formatDate(date)}</span>
         },
         enableSorting: true,
         size: 120,
@@ -222,13 +157,7 @@ export default function JiraStatsTable() {
         header: 'Resolved',
         cell: (info) => {
           const date = info.getValue() as Date | null
-          return date ? (
-            <span className="date-cell">
-              {format(date, 'dd.MM.yyyy')}
-            </span>
-          ) : (
-            <span className="no-value">—</span>
-          )
+          return <span className="date-cell">{formatDate(date)}</span>
         },
         enableSorting: true,
         size: 120,
@@ -290,88 +219,66 @@ export default function JiraStatsTable() {
     getGroupedRowModel: getGroupedRowModel(),
     initialState: {
       pagination: {
-        pageSize: 20,
+        pageSize: DEFAULT_PAGE_SIZE,
       },
     },
     globalFilterFn: 'includesString',
   })
 
-  const statusOptions = ['Done', 'In Progress', 'To Do', 'Blocked', 'Review']
-  const priorityOptions = ['Critical', 'High', 'Medium', 'Low']
-
-  const statusFilter = (table.getColumn('status')?.getFilterValue() as string[]) || []
-  const priorityFilter = (table.getColumn('priority')?.getFilterValue() as string[]) || []
+  const statusFilter =
+    (table.getColumn('status')?.getFilterValue() as string[]) || []
+  const priorityFilter =
+    (table.getColumn('priority')?.getFilterValue() as string[]) || []
 
   const handleStatusFilter = (status: string) => {
     const column = table.getColumn('status')
     const currentFilter = (column?.getFilterValue() as string[]) || []
-    const newFilter = currentFilter.includes(status)
-      ? currentFilter.filter((s) => s !== status)
-      : [...currentFilter, status]
-    column?.setFilterValue(newFilter.length > 0 ? newFilter : undefined)
+    const newFilter = toggleFilterValue(currentFilter, status)
+    column?.setFilterValue(newFilter)
   }
 
   const handlePriorityFilter = (priority: string) => {
     const column = table.getColumn('priority')
     const currentFilter = (column?.getFilterValue() as string[]) || []
-    const newFilter = currentFilter.includes(priority)
-      ? currentFilter.filter((p) => p !== priority)
-      : [...currentFilter, priority]
-    column?.setFilterValue(newFilter.length > 0 ? newFilter : undefined)
+    const newFilter = toggleFilterValue(currentFilter, priority)
+    column?.setFilterValue(newFilter)
   }
 
   const handleExport = () => {
     const rows = table.getFilteredRowModel().rows
-    const headers = columns.map((col) => {
-      if (typeof col.header === 'string') return col.header
-      if ('accessorKey' in col && col.accessorKey) return col.accessorKey as string
-      return ''
-    })
+    const csvContent = generateCSVContent(rows, columns)
+    exportToCSV(csvContent)
+  }
 
-    const csvContent = [
-      headers.join(','),
-      ...rows.map((row) =>
-        columns
-          .map((col) => {
-            const value = 'accessorKey' in col && col.accessorKey
-              ? row.original[col.accessorKey as keyof JiraTask]
-              : ''
-            if (value === null || value === undefined) return ''
-            if (Array.isArray(value)) return value.join('; ')
-            if (value instanceof Date) return format(value, 'dd.MM.yyyy')
-            return typeof value === 'string' ? `"${value}"` : String(value)
-          })
-          .join(',')
-      ),
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `jira-statistics-${format(new Date(), 'yyyy-MM-dd')}.csv`
-    link.click()
+  const getSortIcon = (sortDirection: string | false) => {
+    if (sortDirection === 'asc') return <ChevronUp size={ICON_SIZE_MEDIUM} />
+    if (sortDirection === 'desc')
+      return <ChevronDown size={ICON_SIZE_MEDIUM} />
+    return <MoreHorizontal size={ICON_SIZE_SMALL} />
   }
 
   return (
     <div className="table-container">
       {usingMockData && (
-        <div style={{
-          padding: '0.75rem 1rem',
-          background: 'var(--warning)',
-          color: 'white',
-          textAlign: 'center',
-          fontSize: '0.9rem',
-        }}>
+        <div
+          style={{
+            padding: '0.75rem 1rem',
+            background: 'var(--warning)',
+            color: 'white',
+            textAlign: 'center',
+            fontSize: '0.9rem',
+          }}
+        >
           ⚠️ Using demo data (backend not connected)
         </div>
       )}
       <div className="table-toolbar">
         <div className="toolbar-left">
           <div className="search-box">
-            <Search className="search-icon" size={18} />
+            <Search className="search-icon" size={ICON_SIZE_LARGE} />
             <input
               type="text"
-              placeholder="Search across all columns..."
+              placeholder={SEARCH_PLACEHOLDER}
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
               className="search-input"
@@ -381,12 +288,14 @@ export default function JiraStatsTable() {
 
         <div className="toolbar-right">
           <div className="filter-group">
-            <Filter size={18} />
+            <Filter size={ICON_SIZE_LARGE} />
             <span className="filter-label">Status:</span>
-            {statusOptions.map((status) => (
+            {STATUS_OPTIONS.map((status) => (
               <button
                 key={status}
-                className={`filter-chip ${statusFilter.includes(status) ? 'active' : ''}`}
+                className={`filter-chip ${
+                  statusFilter.includes(status) ? 'active' : ''
+                }`}
                 onClick={() => handleStatusFilter(status)}
               >
                 {status}
@@ -396,10 +305,12 @@ export default function JiraStatsTable() {
 
           <div className="filter-group">
             <span className="filter-label">Priority:</span>
-            {priorityOptions.map((priority) => (
+            {PRIORITY_OPTIONS.map((priority) => (
               <button
                 key={priority}
-                className={`filter-chip ${priorityFilter.includes(priority) ? 'active' : ''}`}
+                className={`filter-chip ${
+                  priorityFilter.includes(priority) ? 'active' : ''
+                }`}
                 onClick={() => handlePriorityFilter(priority)}
               >
                 {priority}
@@ -408,7 +319,7 @@ export default function JiraStatsTable() {
           </div>
 
           <button className="toolbar-button" onClick={handleExport}>
-            <Download size={18} />
+            <Download size={ICON_SIZE_LARGE} />
             Export
           </button>
         </div>
@@ -437,12 +348,7 @@ export default function JiraStatsTable() {
                           )}
                           {header.column.getCanSort() && (
                             <span className="sort-indicator">
-                              {{
-                                asc: <ChevronUp size={16} />,
-                                desc: <ChevronDown size={16} />,
-                              }[header.column.getIsSorted() as string] ?? (
-                                <MoreHorizontal size={14} />
-                              )}
+                              {getSortIcon(header.column.getIsSorted())}
                             </span>
                           )}
                         </div>
@@ -465,19 +371,19 @@ export default function JiraStatsTable() {
             {loading ? (
               <tr>
                 <td colSpan={columns.length} className="empty-state">
-                  Loading...
+                  {EMPTY_STATE_MESSAGES.LOADING}
                 </td>
               </tr>
             ) : error ? (
               <tr>
                 <td colSpan={columns.length} className="empty-state">
-                  Error: {error}
+                  {EMPTY_STATE_MESSAGES.ERROR}: {error}
                 </td>
               </tr>
             ) : table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td colSpan={columns.length} className="empty-state">
-                  No data to display
+                  {EMPTY_STATE_MESSAGES.NO_DATA}
                 </td>
               </tr>
             ) : (
@@ -485,7 +391,10 @@ export default function JiraStatsTable() {
                 <tr key={row.id} className="table-row">
                   {row.getVisibleCells().map((cell) => (
                     <td key={cell.id}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </td>
                   ))}
                 </tr>
@@ -518,7 +427,7 @@ export default function JiraStatsTable() {
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft size={ICON_SIZE_MEDIUM} />
           </button>
           <span className="pagination-info">
             Page {table.getState().pagination.pageIndex + 1} of{' '}
@@ -529,7 +438,7 @@ export default function JiraStatsTable() {
             onClick={() => table.nextPage()}
             disabled={!table.getCanNextPage()}
           >
-            <ChevronRight size={16} />
+            <ChevronRight size={ICON_SIZE_MEDIUM} />
           </button>
           <button
             className="pagination-button"
@@ -545,7 +454,7 @@ export default function JiraStatsTable() {
               table.setPageSize(Number(e.target.value))
             }}
           >
-            {[10, 20, 50, 100].map((pageSize) => (
+            {PAGE_SIZE_OPTIONS.map((pageSize) => (
               <option key={pageSize} value={pageSize}>
                 {pageSize} per page
               </option>
