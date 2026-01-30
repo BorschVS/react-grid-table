@@ -6,9 +6,9 @@ import {
   Patch,
   Param,
   Delete,
-  Query,
   HttpCode,
   HttpStatus,
+  Logger,
 } from '@nestjs/common'
 import {
   ApiTags,
@@ -16,17 +16,17 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
-  ApiQuery,
 } from '@nestjs/swagger'
 import { TasksService } from './tasks.service'
 import { CreateTaskDto } from './dto/create-task.dto'
 import { UpdateTaskDto } from './dto/update-task.dto'
-import { PaginationDto } from '../common/dto/pagination.dto'
 import { JiraTask } from '@react-grid-table/shared/types'
 
 @ApiTags('tasks')
 @Controller('tasks')
 export class TasksController {
+  private readonly logger = new Logger(TasksController.name)
+
   constructor(private readonly tasksService: TasksService) {}
 
   @Post()
@@ -40,6 +40,7 @@ export class TasksController {
   @ApiResponse({ status: 400, description: 'Bad request - validation failed' })
   @ApiBody({ type: CreateTaskDto })
   create(@Body() createTaskDto: CreateTaskDto): Promise<JiraTask> {
+    this.logger.log(`Creating new task: ${createTaskDto.title}`)
     return this.tasksService.create(createTaskDto)
   }
 
@@ -50,10 +51,8 @@ export class TasksController {
     description: 'List of all tasks',
     type: [Object],
   })
-  @ApiQuery({ name: 'page', required: false, type: Number })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  findAll(@Query() pagination: PaginationDto): Promise<JiraTask[]> {
-    // For now, return all tasks. Pagination can be added later
+  findAll(): Promise<JiraTask[]> {
+    this.logger.log('Fetching all tasks')
     return this.tasksService.findAll()
   }
 
@@ -67,6 +66,7 @@ export class TasksController {
   })
   @ApiResponse({ status: 404, description: 'Task not found' })
   findOne(@Param('id') id: string): Promise<JiraTask> {
+    this.logger.log(`Fetching task with ID: ${id}`)
     return this.tasksService.findOne(id)
   }
 
@@ -85,6 +85,7 @@ export class TasksController {
     @Param('id') id: string,
     @Body() updateTaskDto: UpdateTaskDto,
   ): Promise<JiraTask> {
+    this.logger.log(`Updating task with ID: ${id}`)
     return this.tasksService.update(id, updateTaskDto)
   }
 
@@ -95,6 +96,7 @@ export class TasksController {
   @ApiResponse({ status: 204, description: 'Task successfully deleted' })
   @ApiResponse({ status: 404, description: 'Task not found' })
   remove(@Param('id') id: string): Promise<void> {
+    this.logger.log(`Deleting task with ID: ${id}`)
     return this.tasksService.remove(id)
   }
 }

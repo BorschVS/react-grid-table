@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, NotFoundException, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { TaskEntity } from './tasks.entity'
@@ -8,21 +8,27 @@ import { UpdateTaskDto } from './dto/update-task.dto'
 
 @Injectable()
 export class TasksService {
+  private readonly logger = new Logger(TasksService.name)
+
   constructor(
     @InjectRepository(TaskEntity)
     private tasksRepository: Repository<TaskEntity>,
   ) {}
 
   async findAll(): Promise<JiraTask[]> {
+    this.logger.debug('Finding all tasks')
     const tasks = await this.tasksRepository.find({
       order: { createdDate: 'DESC' },
     })
+    this.logger.log(`Found ${tasks.length} tasks`)
     return tasks.map(this.mapToJiraTask)
   }
 
   async findOne(id: string): Promise<JiraTask> {
+    this.logger.debug(`Finding task with ID: ${id}`)
     const task = await this.tasksRepository.findOne({ where: { id } })
     if (!task) {
+      this.logger.warn(`Task with ID ${id} not found`)
       throw new NotFoundException(`Task with ID ${id} not found`)
     }
     return this.mapToJiraTask(task)
@@ -38,26 +44,31 @@ export class TasksService {
       components: createTaskDto.components || [],
     })
     const saved = await this.tasksRepository.save(task)
+    this.logger.log(`Task created successfully with key: ${taskKey}`)
     return this.mapToJiraTask(saved)
   }
 
   async update(id: string, updateTaskDto: UpdateTaskDto): Promise<JiraTask> {
     const task = await this.tasksRepository.findOne({ where: { id } })
     if (!task) {
+      this.logger.warn(`Task with ID ${id} not found for update`)
       throw new NotFoundException(`Task with ID ${id} not found`)
     }
     
     await this.tasksRepository.update(id, updateTaskDto)
     const updatedTask = await this.tasksRepository.findOne({ where: { id } })
+    this.logger.log(`Task with ID ${id} updated successfully`)
     return this.mapToJiraTask(updatedTask!)
   }
 
   async remove(id: string): Promise<void> {
     const task = await this.tasksRepository.findOne({ where: { id } })
     if (!task) {
+      this.logger.warn(`Task with ID ${id} not found for deletion`)
       throw new NotFoundException(`Task with ID ${id} not found`)
     }
     await this.tasksRepository.delete(id)
+    this.logger.log(`Task with ID ${id} deleted successfully`)
   }
 
   private async generateTaskKey(): Promise<string> {
