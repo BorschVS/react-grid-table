@@ -1,6 +1,6 @@
 import { DataSource } from 'typeorm'
 import { TaskEntity } from './tasks/tasks.entity'
-import { TaskStatus, TaskPriority, TaskType } from '@react-grid-table/shared/types'
+import { TaskStatus } from '@react-grid-table/shared/types'
 
 const assignees = [
   'Alexander Johnson',
