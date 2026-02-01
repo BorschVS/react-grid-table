@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core'
 import { ValidationPipe, Logger } from '@nestjs/common'
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger'
 import { AppModule } from './app.module'
+import { AllExceptionsFilter } from './common/filters/http-exception.filter'
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap')
@@ -38,6 +39,8 @@ async function bootstrap() {
       },
     }),
   )
+  
+  app.useGlobalFilters(new AllExceptionsFilter())
   
   app.setGlobalPrefix('api')
   

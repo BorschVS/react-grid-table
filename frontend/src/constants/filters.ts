@@ -23,6 +23,14 @@ export const STATUS_COLORS: Record<TaskStatus, string> = {
   Review: 'var(--warning)',
 }
 
+export const STATUS_COLORS_HEX: Record<TaskStatus, string> = {
+  Done: '#10b981',
+  'In Progress': '#06b6d4',
+  'To Do': '#6b7280',
+  Blocked: '#ef4444',
+  Review: '#f59e0b',
+}
+
 export const PRIORITY_COLORS: Record<TaskPriority, string> = {
   Critical: 'var(--error)',
   High: 'var(--warning)',
