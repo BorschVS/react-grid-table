@@ -16,12 +16,17 @@ export class TasksService {
   ) {}
 
   async findAll(): Promise<JiraTask[]> {
-    this.logger.debug('Finding all tasks')
-    const tasks = await this.tasksRepository.find({
-      order: { createdDate: 'DESC' },
-    })
-    this.logger.log(`Found ${tasks.length} tasks`)
-    return tasks.map(this.mapToJiraTask)
+    try {
+      this.logger.debug('Finding all tasks')
+      const tasks = await this.tasksRepository.find({
+        order: { createdDate: 'DESC' },
+      })
+      this.logger.log(`Found ${tasks.length} tasks`)
+      return tasks.map((task) => this.mapToJiraTask(task))
+    } catch (error) {
+      this.logger.error('Error finding tasks:', error)
+      throw error
+    }
   }
 
   async findOne(id: string): Promise<JiraTask> {
@@ -79,35 +84,55 @@ export class TasksService {
   }
 
   private mapToJiraTask(task: TaskEntity): JiraTask {
-    // TypeORM simple-array returns string, need to convert to array
-    const labelsValue = task.labels as string | string[] | undefined
-    const labels = Array.isArray(labelsValue)
-      ? labelsValue
-      : (labelsValue || '').toString().split(',').filter(Boolean)
-    
-    const componentsValue = task.components as string | string[] | undefined
-    const components = Array.isArray(componentsValue)
-      ? componentsValue
-      : (componentsValue || '').toString().split(',').filter(Boolean)
+    try {
+      // TypeORM simple-array returns string, need to convert to array
+      const labelsValue = task.labels as string | string[] | undefined
+      const labels = Array.isArray(labelsValue)
+        ? labelsValue
+        : typeof labelsValue === 'string' && labelsValue
+        ? labelsValue.split(',').filter(Boolean)
+        : []
+      
+      const componentsValue = task.components as string | string[] | undefined
+      const components = Array.isArray(componentsValue)
+        ? componentsValue
+        : typeof componentsValue === 'string' && componentsValue
+        ? componentsValue.split(',').filter(Boolean)
+        : []
 
-    return {
-      id: task.id,
-      key: task.key,
-      title: task.title,
-      status: task.status,
-      priority: task.priority,
-      type: task.type,
-      assignee: task.assignee,
-      reporter: task.reporter,
-      createdDate: task.createdDate,
-      resolvedDate: task.resolvedDate,
-      storyPoints: task.storyPoints,
-      timeSpent: task.timeSpent,
-      timeEstimated: task.timeEstimated,
-      month: task.month,
-      sprint: task.sprint,
-      labels,
-      components,
+      // Ensure dates are Date objects
+      const createdDate = task.createdDate instanceof Date 
+        ? task.createdDate 
+        : new Date(task.createdDate)
+      
+      const resolvedDate = task.resolvedDate 
+        ? (task.resolvedDate instanceof Date 
+          ? task.resolvedDate 
+          : new Date(task.resolvedDate))
+        : null
+
+      return {
+        id: task.id,
+        key: task.key,
+        title: task.title,
+        status: task.status,
+        priority: task.priority,
+        type: task.type,
+        assignee: task.assignee,
+        reporter: task.reporter,
+        createdDate,
+        resolvedDate,
+        storyPoints: task.storyPoints,
+        timeSpent: task.timeSpent,
+        timeEstimated: task.timeEstimated,
+        month: task.month,
+        sprint: task.sprint,
+        labels,
+        components,
+      }
+    } catch (error) {
+      this.logger.error(`Error mapping task ${task.id}:`, error)
+      throw error
     }
   }
 }

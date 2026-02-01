@@ -26,6 +26,37 @@
   font-size: 1.1rem;
 }
 
+.app-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.nav-link {
+  padding: 0.75rem 1.5rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-link.active {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--info) 100%);
+  color: var(--bg-primary);
+  border-color: transparent;
+}
+
 .app-main {
   flex: 1;
   padding: 2rem;
